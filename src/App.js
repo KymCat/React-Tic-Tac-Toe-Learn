@@ -20,8 +20,9 @@ export default function Board() {
   const [squares, setSquares] = useState(Array(9).fill(null));
 
   function handleClick(i) {
+    if (squares[i]) return; // 사각형이 채워져있으면 종료
     const nextSquares = squares.slice();
-    
+
     if (xIsNext) {
       nextSquares[i] = "X";
     }
