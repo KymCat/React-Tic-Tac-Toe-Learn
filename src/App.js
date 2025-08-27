@@ -15,12 +15,27 @@ function Square({value, onSquareClick}) {
 }
 
 export default function Board() {
+  // xIsNext : 다음 플레이어를 결정하기 위한 값(O,X)
+  const [xIsNext, setXIsNext] = useState(true);
   const [squares, setSquares] = useState(Array(9).fill(null));
 
   function handleClick(i) {
-    const nextSquares = squares.slice(); // .slice() 로 완전히 새로배열 할당
-    nextSquares[i] = "X";
+    const nextSquares = squares.slice();
+    
+    if (xIsNext) {
+      nextSquares[i] = "X";
+    }
+    else {
+      nextSquares[i] = "O";
+    }
+
     setSquares(nextSquares);
+    setXIsNext(!xIsNext);
+
+    /*
+      .slice() 배열 깊은 복사
+      리액트는 setSquares에 새로운 참조가 전달될 때만 렌더링을 다시 해줌
+    */
   }
 
   return (
