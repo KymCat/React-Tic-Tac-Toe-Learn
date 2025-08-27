@@ -14,17 +14,16 @@ function Square({value, onSquareClick}) {
   );
 }
 
-export default function Board() {
-  // xIsNext : 다음 플레이어를 결정하기 위한 값(O,X)
-  const [xIsNext, setXIsNext] = useState(true);
-  const [squares, setSquares] = useState(Array(9).fill(null));
-
+function Board({ xIsNext, squares, onPlay }) {
   function handleClick(i) {
     // 사각형이 채워져있거나, 이겼으면 종료
     if (squares[i] || calculateWinner(squares)) 
       return;
 
-    // .slice() 로 배열 복사 -> 원본과 달라져야 렌더링을 해야기에
+    /*
+      .slice() 배열 깊은 복사
+      리액트는 setSquares에 새로운 참조가 전달될 때만 렌더링을 다시 해줌
+    */
     const nextSquares = squares.slice();
 
     if (xIsNext) {
@@ -33,14 +32,8 @@ export default function Board() {
     else {
       nextSquares[i] = "O";
     }
+    onPlay(nextSquares);
 
-    setSquares(nextSquares);
-    setXIsNext(!xIsNext);
-
-    /*
-      .slice() 배열 깊은 복사
-      리액트는 setSquares에 새로운 참조가 전달될 때만 렌더링을 다시 해줌
-    */
   }
 
   const winner = calculateWinner(squares);
@@ -77,6 +70,52 @@ export default function Board() {
   )
 }
 
+export default function Game() {
+  // xIsNext : 다음 플레이어를 결정하기 위한 값(O,X)
+  // history : 게임 타임라인
+  // currentMove : 현재 보고있는 단계(턴)
+  const [history, setHistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const xIsNext = currentMove % 2 === 0;
+  const currentSquares = history[currentMove]; // 현재 턴  squares배열
+
+  function handlePlay(nextSquares) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    setHistory(nextHistory); // 타임라인 추가
+    setCurrentMove(nextHistory.length-1);
+  }
+
+  // 타임라인 점프
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+  }
+
+  const moves = history.map((squares, move) => {
+    let description;
+    if (move > 0) 
+      description = "Go to move #" + move;
+    else 
+      description = "Go to move start";
+
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay}/>
+      </div>
+      <div className="game-info">
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  );
+}
+
 function calculateWinner(squares) {
   const lines = [
     [0, 1, 2],
@@ -87,7 +126,7 @@ function calculateWinner(squares) {
     [2, 5, 8],
     [0, 4, 8],
     [2, 4, 6]
-  ]; // 이기는 경우 모두 정리
+  ]; // 승리하는 경우 : 가로, 세로, 대각선
 
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
